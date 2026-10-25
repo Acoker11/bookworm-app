@@ -17,6 +17,7 @@ create table public.library_items (
   unique (user_id, volume_id)            -- also the composite FK target
 );
 alter table public.library_items enable row level security;
+revoke all on public.library_items from anon;
 
 -- logs ------------------------------------------------------------------
 create table public.logs (
@@ -33,6 +34,23 @@ create table public.logs (
 alter table public.logs enable row level security;
 
 create index logs_volume_created_idx on public.logs (volume_id, created_at desc);
+create index logs_user_volume_idx on public.logs (user_id, volume_id);
+
+-- keep logs.updated_at current ------------------------------------------
+create function public.set_updated_at()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+create trigger logs_set_updated_at
+  before update on public.logs
+  for each row execute function public.set_updated_at();
 
 -- auto-create profile on signup (display name from signup metadata) -----
 create function public.handle_new_user()
@@ -45,7 +63,7 @@ begin
   insert into public.profiles (id, display_name)
   values (
     new.id,
-    coalesce(nullif(btrim(new.raw_user_meta_data ->> 'display_name'), ''), 'Reader')
+    coalesce(nullif(left(btrim(new.raw_user_meta_data ->> 'display_name'), 50), ''), 'Reader')
   );
   return new;
 end;
