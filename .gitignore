@@ -1,0 +1,21 @@
+# Secrets / env
+.env
+.env.*
+!.env.example
+supabase/.env
+supabase/functions/.env
+.mcp.local.json
+
+# Dependencies / build
+node_modules/
+dist/
+.vercel/
+
+# Supabase local
+supabase/.temp/
+supabase/.branches/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
