@@ -19,6 +19,7 @@ Out of scope: WebSockets, Realtime, Redis, caching layers.
 - Only `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` may be `VITE_`-prefixed. Never use the service-role key in the frontend.
 - Never commit `.env*` (except `.env.example`, no real values) or MCP tokens.
 - Every table has RLS enabled; authorization is enforced in the DB, not by hiding UI.
+- Nothing in `prompt-records/` may ever be gitignored; it must always be tracked and committed.
 
 ## Conventions
 - Edge Functions: anonymous-callable; validate input (query required, max length, page range); return only fields the UI needs (https covers, handle missing cover/description); handle upstream errors, 429, timeouts with meaningful status; correct CORS.

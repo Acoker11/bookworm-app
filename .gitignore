@@ -19,3 +19,9 @@ supabase/.branches/
 .DS_Store
 .idea/
 .vscode/
+
+# Logs / build extras
+logs
+npm-debug.log*
+dist-ssr
+*.local
