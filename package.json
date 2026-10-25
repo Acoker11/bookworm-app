@@ -8,6 +8,7 @@
     "build": "vite build",
     "lint": "oxlint",
     "test:rls": "node --env-file=.env scripts/rls-isolation-test.mjs",
+    "test:books": "node scripts/books-function-test.mjs",
     "preview": "vite preview"
   },
   "dependencies": {
