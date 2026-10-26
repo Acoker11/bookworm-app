@@ -1,6 +1,6 @@
 # BookWorm
 
-Netflix-style book browsing app. Spec: README.md (source of truth for requirements).
+Netflix-style book browsing app. Spec: docs/ASSIGNMENT.md (source of truth for requirements).
 Prompt life cycle: DEFINE > EXPLORE > PLAN > CODE > REVIEW > COMMIT.
 
 ## Stack
@@ -37,4 +37,7 @@ Out of scope: WebSockets, Realtime, Redis, caching layers.
 - Before committing: grep for secrets, check `git status` for stray `.env`.
 
 ## Commands
-(Fill in once scaffolded: dev, build, supabase start, functions serve, deploy.)
+- `npm run dev` · `npm run build` · `npm run lint`
+- `npm run test:rls` (user runs; reads `.env`) · `npm run test:books`
+- `supabase db push --linked` (user runs; needs DB password)
+- `supabase functions deploy books --use-api`
