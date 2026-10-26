@@ -27,7 +27,7 @@ The local app talks to the hosted Supabase project, including its deployed `book
 | `VITE_SUPABASE_URL` | `.env` locally, Vercel env vars | Browser (public) |
 | `VITE_SUPABASE_ANON_KEY` | `.env` locally, Vercel env vars | Browser (public, protected by RLS) |
 | `GOOGLE_BOOKS_API_KEY` | **Supabase secrets only** | `books` Edge Function |
-| `ALLOWED_ORIGINS` (optional) | Supabase secrets | `books` Edge Function CORS allowlist |
+| `ALLOWED_ORIGINS` | Supabase secrets | `books` Edge Function CORS allowlist |
 | `TEST_USER_A_EMAIL`, `TEST_USER_A_PASSWORD`, `TEST_USER_B_EMAIL`, `TEST_USER_B_PASSWORD` | local `.env` only | `npm run test:rls` |
 
 Set the Google Books key (server-side only):
@@ -37,6 +37,8 @@ supabase secrets set GOOGLE_BOOKS_API_KEY=<your key>
 ```
 
 `GOOGLE_BOOKS_API_KEY` must **never** be `VITE_`-prefixed, because `VITE_` values are compiled into the browser bundle. The browser never calls Google Books; it calls the `books` Edge Function, which holds the key. Only the two `VITE_SUPABASE_*` values belong in Vercel.
+
+The `books` function's CORS is limited via the `ALLOWED_ORIGINS` secret to `https://bookworm-app-eight.vercel.app` and `http://localhost:5173`.
 
 `.env` is gitignored; `.env.example` lists every variable with no values.
 
@@ -63,6 +65,7 @@ Libraries are private but logs must be public on a book's page. The solution:
 - `npm run test:books`: Edge Function test (validation, response shape, errors, CORS). **89/89 pass.**
 - Secrets audit: **0 matches** for the API key in git history, the production build output, and `prompt-records/`.
 - Follow-up hardening idea: `anon` still has Supabase's default table grants on `logs` and `profiles`. RLS blocks its writes and PostgREST can't TRUNCATE, so this is defense in depth; revoking those grants would add a second layer.
+- Known advisor note: `public.rls_auto_enable()` is `SECURITY DEFINER` and shows as executable by `anon` and `authenticated`. It was created by Supabase's "Enable automatic RLS" project setting and is an event trigger function, so it can't be called directly; it is left unchanged.
 
 ## Known issue
 
