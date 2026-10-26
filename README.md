@@ -59,9 +59,10 @@ Libraries are private but logs must be public on a book's page. The solution:
 
 ## Security testing
 
-- `npm run test:rls`: RLS isolation test with two real users. **13/13 pass.**
+- `npm run test:rls`: RLS isolation test with two real users. **14/14 pass.** Includes a check that users can't change `created_at` on their own log (UPDATE on `logs` is limited to `body` and `rating`).
 - `npm run test:books`: Edge Function test (validation, response shape, errors, CORS). **89/89 pass.**
 - Secrets audit: **0 matches** for the API key in git history, the production build output, and `prompt-records/`.
+- Follow-up hardening idea: `anon` still has Supabase's default table grants on `logs` and `profiles`. RLS blocks its writes and PostgREST can't TRUNCATE, so this is defense in depth; revoking those grants would add a second layer.
 
 ## Known issue
 

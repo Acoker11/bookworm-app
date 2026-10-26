@@ -31,6 +31,8 @@ Defined in `.claude/skills/db-change/SKILL.md`. It encodes the procedure for **a
 
 Because it is a skill, the procedure is invoked when relevant instead of being pasted into prompts.
 
+Used again for the logs-update migration (`20261025130000_restrict_logs_update.sql`), which limits UPDATE on `public.logs` to `body` and `rating` after a Low finding from `rls-reviewer`. Each step was reported and reviewed before the next.
+
 ## MCP server: Supabase (read-only)
 
 Configured in `.mcp.json` with `read_only=true` and features limited to `database,docs`; no token is committed.
