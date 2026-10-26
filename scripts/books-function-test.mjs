@@ -184,8 +184,8 @@ async function main() {
   check('search query 100 chars -> 200', r.status === 200, `${r.status}`)
   r = await U({ type: 'search', query: 'x inauthor:foo "bar"' })
   check(
-    'operator injection stripped (q = intitle:x inauthor foo bar)',
-    r.status === 200 && lastReq().params.get('q') === 'intitle:x inauthor foo bar',
+    'operator injection stripped (q = x inauthor foo bar, no operators)',
+    r.status === 200 && lastReq().params.get('q') === 'x inauthor foo bar',
     lastReq().params.get('q'),
   )
 
@@ -194,19 +194,19 @@ async function main() {
     expectErr(`bad genre ${JSON.stringify(genre)} -> 400`, await U({ type: 'genre', genre }), 400, 'invalid_request')
   }
   const expected = {
-    Adventure: 'subject:adventure',
-    Technology: 'subject:technology',
-    Horror: 'subject:horror',
-    'Sci-Fi': 'subject:"science fiction"',
-    Fiction: 'subject:fiction',
-    'Non-Fiction': 'subject:nonfiction',
+    Adventure: 'adventure',
+    Technology: 'technology',
+    Horror: 'horror',
+    'Sci-Fi': 'science fiction',
+    Fiction: 'fiction',
+    'Non-Fiction': 'nonfiction',
   }
   for (const [genre, q] of Object.entries(expected)) {
     r = await U({ type: 'genre', genre })
     check(`genre ${genre} -> 200, q=${q}`, r.status === 200 && lastReq().params.get('q') === q, lastReq().params.get('q'))
   }
   r = await U({ type: 'home' })
-  check('home -> q=subject:technology', r.status === 200 && lastReq().params.get('q') === 'subject:technology')
+  check('home -> q=technology', r.status === 200 && lastReq().params.get('q') === 'technology')
 
   // page / pageSize
   for (const page of [-1, 25, 1.5, '2', null]) {
@@ -253,6 +253,14 @@ async function main() {
   check('list: no raw google fields', !/volumeInfo|etag|selfLink|kind/.test(r.text))
   r = await U({ type: 'home', page: 24 })
   check('list: hasMore false at max page', r.data?.hasMore === false)
+  r = await U({ type: 'search', query: 'with COVER' })
+  check(
+    'search: keeps only titles containing the text (case-insensitive)',
+    r.status === 200 && r.data?.items?.length === 1 && r.data.items[0].title === 'With Cover',
+    JSON.stringify(r.data?.items?.map((i) => i.title)),
+  )
+  r = await U({ type: 'search', query: 'zzz no title match' })
+  check('search: no title match -> items []', r.status === 200 && r.data?.items?.length === 0)
   r = await U({ type: 'search', query: 'mockempty' })
   check('list: empty result -> items [] and hasMore false', r.status === 200 && r.data?.items?.length === 0 && r.data?.hasMore === false)
 

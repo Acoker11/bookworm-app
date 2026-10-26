@@ -14,12 +14,12 @@ const ID_PATTERN = /^[A-Za-z0-9_-]{6,32}$/
 const QUOTA_REASONS = ['rateLimitExceeded', 'userRateLimitExceeded', 'dailyLimitExceeded', 'quotaExceeded']
 
 const GENRES: Record<string, string> = {
-  Adventure: 'subject:adventure',
-  Technology: 'subject:technology',
-  Horror: 'subject:horror',
-  'Sci-Fi': 'subject:"science fiction"',
-  Fiction: 'subject:fiction',
-  'Non-Fiction': 'subject:nonfiction',
+  Adventure: 'adventure',
+  Technology: 'technology',
+  Horror: 'horror',
+  'Sci-Fi': 'science fiction',
+  Fiction: 'fiction',
+  'Non-Fiction': 'nonfiction',
 }
 
 class HttpError extends Error {
@@ -87,7 +87,7 @@ function readTitleQuery(body: Record<string, unknown>): string {
   if (trimmed.length > MAX_QUERY_LENGTH) throw bad(`query must be at most ${MAX_QUERY_LENGTH} characters`)
   // deno-lint-ignore no-control-regex
   if (/[\u0000-\u001f\u007f]/.test(trimmed)) throw bad('query contains invalid characters')
-  // Drop ":" and quotes so users cannot add Google operators (inauthor:, subject:, ...). Search stays title-only.
+  // Drop ":" and quotes so users cannot add Google operators (inauthor:, subject:, ...).
   const cleaned = trimmed.replace(/[:"]/g, ' ').replace(/\s+/g, ' ').trim()
   if (cleaned.length === 0) throw bad('query is required')
   return cleaned
@@ -188,7 +188,7 @@ async function googleFetch(url: string, apiKey: string, isDetails: boolean) {
   throw new HttpError(502, 'upstream_error', 'The book service had a problem. Please try again.')
 }
 
-async function listBooks(q: string, page: number, pageSize: number, apiKey: string) {
+async function listBooks(q: string, page: number, pageSize: number, apiKey: string, titleContains?: string) {
   const startIndex = page * pageSize
   const params = new URLSearchParams({
     q,
@@ -208,7 +208,10 @@ async function listBooks(q: string, page: number, pageSize: number, apiKey: stri
   for (const v of raw) {
     if (typeof v?.id !== 'string' || seen.has(v.id)) continue
     seen.add(v.id)
-    items.push(shapeBook(v))
+    const book = shapeBook(v)
+    // Google's intitle: operator is unreliable, so search is kept title-only by filtering here.
+    if (titleContains && !book.title.toLowerCase().includes(titleContains)) continue
+    items.push(book)
   }
   const totalItems = typeof data?.totalItems === 'number' ? data.totalItems : 0
   return {
@@ -265,9 +268,12 @@ async function handle(req: Request): Promise<Response> {
     run = (key) => bookDetails(id, key)
   } else {
     let q: string
+    let titleContains: string | undefined
     if (type === 'home') q = GENRES.Technology
-    else if (type === 'search') q = `intitle:${readTitleQuery(body)}`
-    else {
+    else if (type === 'search') {
+      q = readTitleQuery(body)
+      titleContains = q.toLowerCase()
+    } else {
       if (typeof body.genre !== 'string' || !Object.hasOwn(GENRES, body.genre)) {
         throw bad(`genre must be one of: ${Object.keys(GENRES).join(', ')}`)
       }
@@ -275,7 +281,7 @@ async function handle(req: Request): Promise<Response> {
     }
     const page = readPage(body)
     const pageSize = readPageSize(body)
-    run = (key) => listBooks(q, page, pageSize, key)
+    run = (key) => listBooks(q, page, pageSize, key, titleContains)
   }
 
   const apiKey = Deno.env.get('GOOGLE_BOOKS_API_KEY')
