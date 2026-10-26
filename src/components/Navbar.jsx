@@ -1,10 +1,17 @@
 import { useState } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 import { GENRES } from '../lib/genres'
 
 export default function Navbar() {
   const [text, setText] = useState('')
   const navigate = useNavigate()
+  const { user, displayName, logOut } = useAuth()
+
+  async function onLogOut() {
+    await logOut().catch(() => {})
+    navigate('/')
+  }
 
   function onSubmit(e) {
     e.preventDefault()
@@ -31,6 +38,20 @@ export default function Navbar() {
         />
         <button type="submit">Search</button>
       </form>
+      <div className="auth-links">
+        {user ? (
+          <>
+            <span>{displayName}</span>
+            <NavLink to="/library">My Library</NavLink>
+            <button onClick={onLogOut}>Log out</button>
+          </>
+        ) : (
+          <>
+            <NavLink to="/login">Log in</NavLink>
+            <NavLink to="/signup">Sign up</NavLink>
+          </>
+        )}
+      </div>
     </header>
   )
 }
