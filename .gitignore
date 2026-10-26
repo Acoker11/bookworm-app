@@ -25,3 +25,6 @@ logs
 npm-debug.log*
 dist-ssr
 *.local
+
+# Playwright MCP output
+.playwright-mcp/
