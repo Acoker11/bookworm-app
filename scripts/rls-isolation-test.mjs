@@ -93,6 +93,14 @@ async function main() {
   })
   if (!log) return
 
+  await check("A can't change created_at on A's own log", async () => {
+    const { error } = await clientA
+      .from('logs')
+      .update({ created_at: '2000-01-01T00:00:00Z' })
+      .eq('id', log.id)
+    return { ok: !!error, detail: errInfo(error) }
+  })
+
   await check("B can't see A's library", async () => {
     const { data, error } = await clientB
       .from('library_items')
